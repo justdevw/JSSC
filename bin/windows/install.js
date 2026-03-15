@@ -41,12 +41,12 @@ const installDir = path.join(
 
 const iconPath = path.join(installDir, "jssc.ico");
 const localPkg = path.join(installDir, "pkg");
-const localBin = path.join(localPkg, "dist"); // ,"bin");
+const localBin = path.join(localPkg, "dist");
 const localCfg = path.join(installDir, "default.justc");
 const localVbs = path.join(installDir, "jssc.vbs");
 
 const pkgRoot = path.resolve(__dirname, "../../");
-const cliPath = path.resolve(localBin, "./cli.js"); // ,"./index.js");
+const cliPath = path.resolve(localBin, "./cli.js");
 const cfgPath = path.resolve(localBin, "./windows/default.justc");
 const vbsPath = path.resolve(localBin, "./windows/jssc.vbs");
 const nodePath = process.execPath;
