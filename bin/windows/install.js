@@ -8,7 +8,6 @@ import { execSync, spawn } from "child_process";
 import fs from "fs";
 import path from "path";
 import os from "os";
-import https from "https";
 import { fileURLToPath } from "url";
 import { confirm, welcome } from "./ui.js";
 import { name__, repo, site } from "../../lib/meta.js";
@@ -30,7 +29,6 @@ if (
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const ICON_URL = "https://jssc.js.org/favicon.ico";
 const APP_NAME = "JSSC";
 const EXT = ".jssc";
 
@@ -49,6 +47,7 @@ const pkgRoot = path.resolve(__dirname, "../../");
 const cliPath = path.resolve(localBin, "./cli.js");
 const cfgPath = path.resolve(localBin, "./windows/default.justc");
 const vbsPath = path.resolve(localBin, "./windows/jssc.vbs");
+const icoPath = path.resolve(localBin, "./windows/icon.ico");
 const nodePath = process.execPath;
 
 const ui = path.resolve(__dirname, "./ui");
@@ -56,28 +55,6 @@ const uiProgressBar = path.resolve(ui, "./wait.ps1");
 
 function run(cmd) {
     execSync(cmd, { stdio: "inherit" });
-}
-
-function downloadIcon() {
-    return new Promise((resolve, reject) => {
-        if (!fs.existsSync(installDir)) {
-            fs.mkdirSync(installDir, { recursive: true });
-        }
-
-        const file = fs.createWriteStream(iconPath);
-
-        https.get(ICON_URL, res => {
-            if (res.statusCode !== 200) {
-                reject(new Error("Failed to download icon"));
-                return;
-            }
-
-            res.pipe(file);
-            file.on("finish", () => {
-                file.close(resolve);
-            });
-        }).on("error", reject);
-    });
 }
 
 function showProgress() {
@@ -93,12 +70,6 @@ function showProgress() {
 async function setup() {
     const progressUI = showProgress();
 
-    try {
-        await downloadIcon();
-    } catch (err) {
-        throw new Error('Failed to download icon:', err.message, '\n' + err.trace);
-    }
-
     let e = [false, undefined];
     try {
         fs.mkdirSync(localPkg, {
@@ -109,9 +80,8 @@ async function setup() {
             force: true
         });
         fs.copyFileSync(cfgPath, localCfg);
-        fs.rmSync(cfgPath);
         fs.copyFileSync(vbsPath, localVbs);
-        fs.rmSync(vbsPath);
+        fs.copyFileSync(icoPath, iconPath);
 
         const vbs = `wscript.exe \\"${localVbs}\\" \\"${nodePath}\\" \\"${cliPath}\\"`;
 
