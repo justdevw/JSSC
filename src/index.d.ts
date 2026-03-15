@@ -221,7 +221,10 @@ const cache: {
     readonly clear: typeof clearCache;
     readonly size: number;
 };
-const version: string,
+const version: string;
+const worker: {
+    url: string | URL;
+};
 
 export {
     compress,
@@ -232,4 +235,5 @@ export {
     decompressFromBase64,
     cache,
     version,
+    worker
 };
