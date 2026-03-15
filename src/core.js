@@ -449,7 +449,6 @@ export async function compress(input, options) {
         results.length == 0 ||
         results.every(c => c == null)
     )) {
-        /* workers failed */
         results = await noWorkers();
         usedWorkers = false;
     }
