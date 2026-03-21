@@ -32,13 +32,3 @@ jobs:
       - name: Publish to npm
         run: npm publish --access public || npm publish --access public --tag beta
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '24.x'
-          registry-url: 'https://npm.pkg.github.com'
-          scope: '@${{ github.repository_owner }}'
-      - name: Publish to GitHub Packages
-        run: npm publish --registry=https://npm.pkg.github.com || npm publish --registry=https://npm.pkg.github.com --tag beta
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
