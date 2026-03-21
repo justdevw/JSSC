@@ -1,130 +1,66 @@
-# JSSC — JavaScript String Compressor
-**JSSC (JavaScript String Compressor)** is an open-source, **lossless string compression algorithm** designed specifically for JavaScript.
+![JSSC](.github/image.png)
 
-It operates directly on JavaScript strings (UTF-16) and produces compressed data that is also a valid JavaScript string.
+# JSSC — JavaScript String Compressor
+JSSC is an open-source, **lossless string compression algorithm** designed specifically for JavaScript strings (UTF-16). It produces compressed data that remains a valid JS string, making it ideal for environments where binary data is difficult to handle.
+
+> **Note:** The npm package is named [`strc`](https://www.npmjs.com/package/strc). <br>
+> The `jssc` ("jSSC") npm package is unrelated to this project. <br>
+> Both names (uppercase "JSSC" and lowercase "strc") refer to the same project.
+
+JSSC is a complex algorithm featuring multiple internal compression modes tailored for different data structures. During compression, each mode evaluates the input; if its specific conditions are met, it produces a **candidate** string. JSSC then selects the best candidate — the one that achieves the highest compression ratio while passing a mandatory lossless decompression check. This approach results in a slower compression phase but ensures **high compression ratio** and **fast decompression**, as no brute-forcing or validation is required during recovery.
+
+⚠️ **Compatibility Notice:** Compressed strings from v1.x.x are **not compatible** with v2.x.x due to header and encoding changes. JSSC follows Semantic Versioning: successful decompression is guaranteed only if the decompressor version is equal to or newer than the compressor version (within the same major version).
 
 ## Key Features
-- ✨ **Lossless compression**
-- 🗜️ **High compression ratios**
-  - up to **8:1** for numeric data
-  - strong results for repetitive and structured text
-- 🌍 **Multilingual support**
-  - English, Russian, Japanese, Chinese, Hindi, Bengali, and more
-- 📦 **JSON support**
-  - JSON is converted to [JUSTC](https://just.js.org/justc) before compression
-- ⚙️ **String → String**
-  - no binary buffers
-  - no external metadata
-  - all required information is embedded into the compressed string itself
-- 🧠 **Self-validating compression**
-  - every compression mode is verified by decompression before being accepted
-- 🔁 **Recursive compression**
-- 📜 **TypeScript definitions** included
+- ~**2.5:1 average compression ratio**. 
+- **String-to-String**: No binary buffers or external metadata.
+- **Self-validating**: Compressed string is guaranteed to be successfully decompressed and with no data loss (if the string is not corrupted and the string was compressed by same major and not larger minor and patch version following SemVer).
+- **TypeScript support** and fully-typed API.
 
-## Important Version Compatibility Notice
-⚠️ **Compressed strings produced by JSSC v1.x.x are NOT compatible with v2.x.x**
+## Documentation
+Full documentation, API reference, and live examples are available at **[jssc.js.org](https://jssc.js.org/)**.
 
-Reasons:
-- The first 16 bits (header layout) were slightly redesigned
-- New compression modes were added
-- Character encoding tables were extended
-
-## Character Encoding
-JSSC operates on **JavaScript UTF-16 code units**, not on UTF-8 bytes.
-
-This means:
-- Any character representable in a JavaScript string is supported
-- Compression works at the UTF-16 level
-- One JavaScript character = **16 bits**
-- Binary data must be converted to strings before compression
-
-## Project Name vs npm Package Name
-The project is called **JSSC** (JavaScript String Compressor).
-
-The npm package is published under the name **`strc`**, because the name `jssc` is already occupied on npm by an unrelated Java-based package.
-
-Both names refer to the same project.
-
-## Installation
-Install via npm
+## Quick start
 ```
 npm i strc
 ```
-
-> The npm package name is `strc`, but the library itself is **JSSC**.
-
-Or you can use it on your website by inserting the following HTML `script` tags.
-```html
-<script src="https://unpkg.com/justc"></script>
-<script src="https://unpkg.com/strc"></script>
-```
-
-## Usage
-#### JavaScript
 ```js
-const { compress, decompress } = require('strc');
-
-const example = await compress("Hello, world!");
-await decompress(example);
-```
-
-#### TypeScript
-```ts
 import { compress, decompress } from 'strc';
 
-const example = await compress("Hello, world!");
-await decompress(example);
+const data = "Hello, world!";
+const compressed = await compress(data);
+const original = await decompress(compressed);
 ```
 
-#### Deno (server-side)
-```ts
-import JSSC from 'https://jssc.js.org/jssc.min.js';
-
-const example = await JSSC.compress("Hello, world!");
-await JSSC.decompress(example);
+CLI:
+```
+npx jssc --help
 ```
 
-#### Browsers / Frontend (UMD)
-When using the UMD build via CDN, the library is exposed globally as `JSSC`.
+Website/Browsers:
 ```html
 <script src="https://unpkg.com/justc"></script>
 <script src="https://unpkg.com/strc"></script>
 ```
 ```js
-const compressed   = await JSSC.compress("Hello, world!");
-const decompressed = await JSSC.decompress(compressed);
-```
-
-## JS API
-#### `compress(input: string | object | number): Promise<string>`
-Compresses the input and returns a compressed JavaScript string.
-
-#### `decompress(input: string, stringify?: boolean): Promise<string | object | number>`
-Decompresses a previously compressed string/object/integer.
-
-## CLI Usage
-```
-jssc --help
-```
-
-**Compress a file/directory to JSSC Archive:**
-```
-jssc <input>
-```
-**Decompress a JSSC Archive:**
-```
-jssc <input.jssc> -d
+const data = "Hello, world!";
+const compressed = await JSSC.compress(data);
+const original = await JSSC.decompress(compressed);
 ```
 
 ## Dependencies
 JSSC depends on:
 - <img align="top" src="https://just.js.org/justc/logo-50.svg" alt="JUSTC Logo" width="26" height="26"> [JUSTC](https://just.js.org/justc) by [JustStudio.](https://juststudio.is-a.dev/)
+- [lz-string](https://github.com/pieroxy/lz-string/) by [pieroxy](https://github.com/pieroxy)
 - [unicode-emoji-json](https://www.npmjs.com/package/unicode-emoji-json) by [Mu-An Chiou](https://github.com/muan)
+- [utf8.js](https://github.com/mathiasbynens/utf8.js) by [Mathias Bynens](https://mathiasbynens.be/)
 
-JSSC CLI and Format Handling depends on:
+JSSC CLI and Format Handling (`.jssc`) depends on:
 - [crc-32](https://www.npmjs.com/package/crc-32) by [SheetJS](https://sheetjs.com/)
-- [uint8arrays](https://www.npmjs.com/package/uint8arrays) by [Alex Potsides](https://github.com/achingbrain)
 - [semver](https://semver.npmjs.com/) by [npm](https://www.npmjs.com/)
+- [uint8arrays](https://www.npmjs.com/package/uint8arrays) by [Alex Potsides](https://github.com/achingbrain)
+
+> **Note:** All dependencies (except **JUSTC**) are bundled into the final build.
 
 ## License
 [MIT © 2025-2026 JustDeveloper](https://github.com/justdevw/JSSC/blob/main/LICENSE)
