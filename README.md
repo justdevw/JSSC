@@ -9,7 +9,7 @@ JSSC is an open-source, **lossless string compression algorithm** designed speci
 
 JSSC is a complex algorithm featuring multiple internal compression modes tailored for different data structures. During compression, each mode evaluates the input; if its specific conditions are met, it produces a **candidate** string. JSSC then selects the best candidate — the one that achieves the highest compression ratio while passing a mandatory lossless decompression check. This approach results in a slower compression phase but ensures **high compression ratio** and **fast decompression**, as no brute-forcing or validation is required during recovery.
 
-⚠️ **Compatibility Notice:** Compressed strings from v1.x.x are **not compatible** with v2.x.x due to header and encoding changes. JSSC follows Semantic Versioning: successful decompression is guaranteed only if the decompressor version is equal to or newer than the compressor version (within the same major version).
+> ⚠️ **Compatibility Notice:** Compressed strings from v1.x.x are **not compatible** with v2.x.x due to header and encoding changes. JSSC follows Semantic Versioning: successful decompression is guaranteed only if the decompressor version is equal to or newer than the compressor version (within the same major version).
 
 ## Key Features
 - ~**2.5:1 average compression ratio**. 
@@ -54,11 +54,13 @@ JSSC depends on:
 - [lz-string](https://github.com/pieroxy/lz-string/) by [pieroxy](https://github.com/pieroxy)
 - [unicode-emoji-json](https://www.npmjs.com/package/unicode-emoji-json) by [Mu-An Chiou](https://github.com/muan)
 - [utf8.js](https://github.com/mathiasbynens/utf8.js) by [Mathias Bynens](https://mathiasbynens.be/)
+<br>
 
 JSSC CLI and Format Handling (`.jssc`) depends on:
 - [crc-32](https://www.npmjs.com/package/crc-32) by [SheetJS](https://sheetjs.com/)
 - [semver](https://semver.npmjs.com/) by [npm](https://www.npmjs.com/)
 - [uint8arrays](https://www.npmjs.com/package/uint8arrays) by [Alex Potsides](https://github.com/achingbrain)
+<br>
 
 > **Note:** All dependencies (except **JUSTC**) are bundled into the final build.
 
