@@ -9,6 +9,7 @@ on:
 
 permissions:
   contents: read
+  packages: write
   id-token: write
 
 concurrency:
@@ -25,7 +26,19 @@ jobs:
           node-version: '24.x'
           registry-url: 'https://registry.npmjs.org'
           
-      - run: bash src/build.sh
+      - name: Build
+        run: bash src/build.sh
 
-      - name: Publish
+      - name: Publish to npm
         run: npm publish --access public || npm publish --access public --tag beta
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.x'
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@${{ github.repository_owner }}'
+      - name: Publish to GitHub Packages
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
