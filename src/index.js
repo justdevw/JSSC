@@ -3,9 +3,13 @@ if ((String.fromCharCode(65536).charCodeAt(0) === 65536) || !(String.fromCharCod
     throw new Error(prefix+'Supported UTF-16 only!')
 }
 
-import { 
-    compress, decompress, compressLarge,
-    compressToBase64, compressLargeToBase64, decompressFromBase64,
+import {
+    compress, decompress,
+    compressToBase64, decompressFromBase64,
+    compressToBase64URL, decompressFromBase64URL,
+    compressToUint8Array, decompressFromUint8Array,
+    compressLarge, compressLargeToBase64, compressLargeToBase64URL, compressLargeToUint8Array,
+    
     getWorkerURL, setWorkerURL
 } from './core.js';
 import { setMaxCache, getMaxCache, validateCache } from './cache.js';
@@ -36,8 +40,11 @@ const worker = {
 }
 
 export {
-    compress, decompress, compressLarge,
-    compressToBase64, compressLargeToBase64, decompressFromBase64,
+    compress, decompress,
+    compressToBase64, decompressFromBase64,
+    compressToBase64URL, decompressFromBase64URL,
+    compressToUint8Array, decompressFromUint8Array,
+    compressLarge, compressLargeToBase64, compressLargeToBase64URL, compressLargeToUint8Array,
 
     cache, version, worker
 }

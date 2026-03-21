@@ -16,7 +16,7 @@ import { freqMap, freqMapSplitters } from './modes/freqMap.js';
 import { segments, splitGraphemes } from './modes/segmentation.js';
 import { _JSSC } from './encodings.js';
 import { compressSequences, decompressSequences } from './sequences.js';
-import { convertBase } from '../lib/third-party/convertBase.js';
+import { convertBase, URL as B64URL } from '../lib/third-party/convertBase.js';
 import { compressB64, decompressB64 } from './modes/base64.js';
 import { encode, decode } from '@strc/utf16-to-any-base';
 import utf8 from "utf8"; const { eUTF8 } = (()=>{
@@ -30,6 +30,7 @@ import lz from 'lz-string'; const { cLZ, dLZ } = (()=>{
 import { runInWorkers, canUseWorkers, workerURL, workerMin } from './useWorker.js';
 import { validateCache, setCache } from './cache.js';
 import { compress as cAXOR, decompress as dAXOR } from './modes/axor.js';
+import { B64toUI8A, UI8AtoB64 } from '../lib/uint8.js';
 
 function cryptCharCode(
     code, get = false,
@@ -855,19 +856,33 @@ export async function decompress(str, stringify = false) {
     }
 }
 
+function noDebugMode(result) {
+    if (result instanceof JSSC) throw new Error(prefix+'Invalid options input.');
+    return result;
+}
+
 export async function compressToBase64(...input) {
-    const compressed = await compress(...input);
-
-    if (compressed instanceof JSSC) throw new Error(prefix+'Invalid options input.');
-
+    const compressed = noDebugMode(await compress(...input));
     return B64Padding(encode(compressed));
 }
 export async function decompressFromBase64(base64, ...params) {
-    const decompressed = await decompress(decode(base64.replace(/=+$/, '')), ...params);
+    return noDebugMode(await decompress(decode(base64.replace(/=+$/, '')), ...params));
+}
 
-    if (decompressed instanceof JSSC) throw new Error(prefix+'Invalid options input.');
+export async function compressToBase64URL(...input) {
+    const compressed = noDebugMode(await compress(...input));
+    return encode(compressed, 64, B64URL);
+}
+export async function decompressFromBase64URL(base64url, ...params) {
+    return noDebugMode(await decompress(decode(base64url, 64, B64URL), ...params));
+}
 
-    return decompressed;
+export async function compressToUint8Array(...input) {
+    const compressed = await compressToBase64(...input);
+    return B64toUI8A(compressed.replace(/=+$/, ''));
+}
+export async function decompressFromUint8Array(uint8array, ...params) {
+    return await decompressFromBase64(UI8AtoB64(uint8array), ...params);
 }
 
 export async function compressLarge(input, ...params) {
@@ -883,11 +898,16 @@ export async function compressLarge(input, ...params) {
     return result.join('');
 }
 export async function compressLargeToBase64(...input) {
-    const compressed = await compress(...input);
-
-    if (compressed instanceof JSSC) throw new Error(prefix+'Invalid options input.');
-
+    const compressed = noDebugMode(await compress(...input));
     return B64Padding(encode(compressed));
+}
+export async function compressLargeToBase64URL(...input) {
+    const compressed = noDebugMode(await compress(...input));
+    return encode(compressed, 64, B64URL);
+}
+export async function compressLargeToUint8Array(...input) {
+    const compressed = await compressLargeToBase64(...input);
+    return B64toUI8A(compressed.replace(/=+$/, ''));
 }
 
 async function validate(compressed, originalInput) {
