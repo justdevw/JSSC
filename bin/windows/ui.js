@@ -5,7 +5,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const uiDir = path.resolve(__dirname, "./windows/ui");
+const uiDir = path.resolve(__dirname, "./ui");
 const confirmPs1 = path.resolve(uiDir, "./confirm.ps1");
 const welcomePs1 = path.resolve(uiDir, "./welcome.ps1");
 const compresPs1 = path.resolve(uiDir, "./compress.ps1");

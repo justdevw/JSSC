@@ -4,6 +4,7 @@ mkdir dist/windows
 cp -r bin/windows/ui dist/windows/ui
 cp bin/windows/default.justc dist/windows/default.justc
 cp bin/windows/jssc.vbs dist/windows/jssc.vbs
+cp bin/windows/icon.ico dist/windows/icon.ico
 
 node src/emoji.js
 rm -f src/emoji.js
