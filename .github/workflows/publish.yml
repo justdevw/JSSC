@@ -38,7 +38,7 @@ jobs:
           registry-url: 'https://npm.pkg.github.com'
           scope: '@${{ github.repository_owner }}'
       - name: Publish to GitHub Packages
-        run: npm publish || npm publish --tag beta
+        run: npm publish --registry=https://npm.pkg.github.com || npm publish --registry=https://npm.pkg.github.com --tag beta
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
