@@ -53,11 +53,55 @@ export interface compressOptions {
     minifiedworker?: boolean,
     depthLimit?: number,
     workerLimit?: number,
+    JSONstring?: boolean,
     debug?: boolean
 }
+/**
+ * JavaScript String Compressor - decompress options
+ * @license MIT
+ * @copyright (c) 2025-2026 JustDeveloper <<https://justdeveloper.is-a.dev>>
+ * @since 2.1.0
+ */
 export interface decompressOptions {
     stringify?: boolean,
     debug?: boolean
+}
+/**
+ * JavaScript String Compressor - debug output
+ * @license MIT
+ * @copyright (c) 2025-2026 JustDeveloper <<https://justdeveloper.is-a.dev>>
+ * @since 2.1.0
+ */
+export interface JSSCCompressedDebug {
+    string: string,
+    header: {
+        code: number,
+        bin: string,
+        blocks: [string, "0"|"1", string, "0"|"1", "0"|"1", "0"|"1", string],
+        code1: string,
+        code2: string,
+        code3: string,
+        s: boolean,
+        i: boolean,
+        o: boolean,
+        b: boolean
+    },
+    mode: {
+        id: number,
+        name: string
+    }
+}
+/**
+ * JavaScript String Compressor - debug output
+ * @license MIT
+ * @copyright (c) 2025-2026 JustDeveloper <<https://justdeveloper.is-a.dev>>
+ * @since 2.1.0
+ */
+export interface JSSCDebug {
+    input: string|object|number|JSSCCompressedDebug,
+    output: string|object|number|JSSCCompressedDebug,
+    options: compressOptions | decompressOptions,
+    workers: boolean
 }
 
 /**
@@ -68,7 +112,7 @@ export interface decompressOptions {
  * await compress('Hello, World!');
  * @since 1.0.0
  */
-export function compress(str: string, options?: compressOptions): Promise<string>;
+export function compress(str: string, options?: compressOptions): Promise<string|JSSCDebug>;
 /**
  * JavaScript String Compressor - compress function
  * @param obj - Input object to compress
@@ -78,7 +122,7 @@ export function compress(str: string, options?: compressOptions): Promise<string
  * await compress({a: "b"});
  * @since 2.0.0
  */
-export function compress(obj: object, options?: compressOptions): Promise<string>;
+export function compress(obj: object, options?: compressOptions): Promise<string|JSSCDebug>;
 /**
  * JavaScript String Compressor - compress function
  * @param int - Input integer to compress
@@ -87,7 +131,7 @@ export function compress(obj: object, options?: compressOptions): Promise<string
  * await compress(10);
  * @since 2.0.0
  */
-export function compress(int: number, options?: compressOptions): Promise<string>;
+export function compress(int: number, options?: compressOptions): Promise<string|JSSCDebug>;
 
 /**
  * JavaScript String Compressor - decompress function
@@ -97,7 +141,7 @@ export function compress(int: number, options?: compressOptions): Promise<string
  * await decompress(compressedString);
  * @since 1.0.0
  */
-export function decompress(str: string): Promise<object|number|string>;
+export function decompress(str: string): Promise<object|number|string|JSSCDebug>;
 /**
  * JavaScript String Compressor - decompress function
  * @param str - Compressed string to decompress
@@ -107,7 +151,7 @@ export function decompress(str: string): Promise<object|number|string>;
  * await decompress(compressedString, true);
  * @since 2.0.0
  */
-export function decompress(str: string, stringify: true): Promise<string>;
+export function decompress(str: string, stringify: true): Promise<string|JSSCDebug>;
 /**
  * JavaScript String Compressor - decompress function
  * @param str - Compressed string to decompress
@@ -116,7 +160,7 @@ export function decompress(str: string, stringify: true): Promise<string>;
  * await decompress(compressedString);
  * @since 2.1.0
  */
-export function decompress(str: string, options?: decompressOptions): Promise<object|number|string>;
+export function decompress(str: string, options?: decompressOptions): Promise<object|number|string|JSSCDebug>;
 
 /**
  * JavaScript String Compressor - compressToBase64 function
