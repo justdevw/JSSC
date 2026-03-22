@@ -55,7 +55,7 @@ export async function toFile(isDir, extn, files, dirs, useCRC32, startsWithDot) 
         ? undefined
         : concat(data(B64toUI8A(extn)));
 
-    const noPath = files.length == 1;
+    const noPath = !isDir && files.length == 1;
     const output = [];
     const files8 = [];
     let need = 1;
@@ -199,7 +199,7 @@ export async function fromFile(uint8) {
 
         if (content == 0) dirs.push(path);
         else files.push([
-            path == 0 ? name__ : path, content
+            path == 0 ? '' : path, content
         ]);
 
         if (i == uint8.length) break;

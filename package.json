@@ -1,6 +1,6 @@
 {
   "name": "strc",
-  "version": "2.1.1-a",
+  "version": "2.1.1-b",
   "description": "JavaScript String Compressor - lossless string compression algorithm",
   "main": "dist/jssc.cjs",
   "repository": {

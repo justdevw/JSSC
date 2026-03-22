@@ -382,7 +382,7 @@ export async function compress(input, options) {
             if (opts.justc && opts.jsonstring) {
                 const JUSTCobj = await toJUSTC(obj);
                 const JSONstr = JSON.stringify(await parseJUSTC(JUSTCobj));
-                if (JSONstr == JSON.stringify(str)) JUSTCstr = JUSTCobj;
+                if (JSONstr == JSON.stringify(obj)) JUSTCstr = JUSTCobj;
             }
 
             if (typeof JUSTCstr != 'undefined' && JUSTCstr.length < str.length && str == JSON.stringify(obj)) {                
@@ -899,22 +899,24 @@ export async function decompressFromUint8Array(uint8array, ...params) {
 
 export async function compressLarge(input, ...params) {
     const LENGTH = 1024;
+    if (input.length < LENGTH || typeof input != 'string') return await compress(input, ...params);
+
     const result = [charCode(cryptCharCode(11, false, false, false, undefined, undefined, false, 3))];
     
     for (let i = 0; i < input.length; i += LENGTH) {
         const chunk = input.slice(i, i + LENGTH);
-        const compressed = await compress(chunk, ...params);
+        const compressed = noDebugMode(await compress(chunk, ...params));
         result.push(String.fromCharCode(compressed.length), compressed);
     }
 
     return result.join('');
 }
 export async function compressLargeToBase64(...input) {
-    const compressed = noDebugMode(await compress(...input));
+    const compressed = await compressLarge(...input);
     return B64Padding(encode(compressed));
 }
 export async function compressLargeToBase64URL(...input) {
-    const compressed = noDebugMode(await compress(...input));
+    const compressed = await compressLarge(...input);
     return encode(compressed, 64, B64URL);
 }
 export async function compressLargeToUint8Array(...input) {

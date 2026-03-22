@@ -464,7 +464,7 @@ function findEmptyDirs(dir) {
                     fullPath = path.resolve(path.dirname(current), delta);
                 }
                 if (!isDir) {
-                    fullPath += (startsWithDot ? '.' : '') + await decompressFromBase64(extn);
+                    fullPath = output[0] + (startsWithDot ? '.' : '') + decompressFromBase64(extn);
                 }
                 current = checkPath(fullPath);
 
