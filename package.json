@@ -110,7 +110,7 @@
     "utf16"
   ],
   "scripts": {
-    "test": "node test/run.cjs"
+    "test": "node test/test.cjs"
   },
   "devDependencies": {
     "@codecov/rollup-plugin": "^1.9.1",
