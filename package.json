@@ -113,18 +113,18 @@
     "test": "node test/run.cjs"
   },
   "devDependencies": {
+    "@codecov/rollup-plugin": "^1.9.1",
     "@rollup/plugin-commonjs": "^29.0.0",
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "^16.0.3",
-    "rollup": "^4.57.1",
-    "terser": "^5.46.0",
-    
-    "lz-string": "^1.5.0",
-    "semver": "^7.7.4",
-    "uint8arrays": "^5.1.0",
-    "utf8": "^3.0.0",
     "@strc/utf16-to-any-base": "^1.0.0",
-    "crc-32": "^1.2.2"
+    "crc-32": "^1.2.2",
+    "lz-string": "^1.5.0",
+    "rollup": "^4.57.1",
+    "semver": "^7.7.4",
+    "terser": "^5.46.0",
+    "uint8arrays": "^5.1.0",
+    "utf8": "^3.0.0"
   },
   "module": "dist/jssc.mjs",
   "browser": "dist/jssc.js",

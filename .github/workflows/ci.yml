@@ -29,3 +29,5 @@ jobs:
           ACTIONS_RUNNER_DEBUG: false
       - name: Run tests
         run: bash test/run.sh
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

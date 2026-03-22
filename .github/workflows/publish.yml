@@ -28,6 +28,8 @@ jobs:
           
       - name: Build
         run: bash src/build.sh
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Publish to npm
         run: npm publish --access public || npm publish --access public --tag beta

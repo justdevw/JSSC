@@ -1,8 +1,24 @@
 import resolve from '@rollup/plugin-node-resolve';
 import json from '@rollup/plugin-json';
 import commonjs from '@rollup/plugin-commonjs';
+import { codecovRollupPlugin } from "@codecov/rollup-plugin";
 
 import { name__ } from './lib/meta.js';
+
+function bundleName(str) {
+    return str
+        .replaceAll(' ', '_')
+        .replaceAll('(', '[')
+        .replaceAll(')', ']');
+}
+const codecovConfig = (name) => ({
+    enableBundleAnalysis: process.env.CODECOV_TOKEN !== undefined,
+    bundleName: name__ + (
+        name.length > 0 ? bundleName('_' + name) : ''
+    ),
+    uploadToken: process.env.CODECOV_TOKEN,
+    telemetry: false
+})
 
 export default [
     {
@@ -10,7 +26,8 @@ export default [
         plugins: [
             resolve(),
             json(),
-            commonjs()
+            commonjs(),
+            codecovRollupPlugin(codecovConfig(''))
         ],
         output: [
             {
@@ -40,7 +57,8 @@ export default [
         plugins: [
             resolve({ preferBuiltins: true }),
             json(),
-            commonjs()
+            commonjs(),
+            codecovRollupPlugin(codecovConfig('Worker'))
         ],
         output: {
             file: 'dist/worker.js',
@@ -60,7 +78,8 @@ export default [
                 exportConditions: ['node']
             }),
             json(),
-            commonjs()
+            commonjs(),
+            codecovRollupPlugin(codecovConfig('CLI'))
         ],
         output: {
             file: 'dist/cli.js',
@@ -84,7 +103,8 @@ export default [
                 exportConditions: ['node']
             }),
             json(),
-            commonjs()
+            commonjs(),
+            codecovRollupPlugin(codecovConfig('Windows Integration (Install)'))
         ],
         output: {
             file: 'dist/windows/install.js',
@@ -108,7 +128,8 @@ export default [
                 exportConditions: ['node']
             }),
             json(),
-            commonjs()
+            commonjs(),
+            codecovRollupPlugin(codecovConfig('Windows Integration (Uninstall)'))
         ],
         output: {
             file: 'dist/windows/uninstall.js',
