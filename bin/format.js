@@ -99,7 +99,7 @@ export async function toFile(isDir, extn, files, dirs, useCRC32, startsWithDot) 
     }
 
     const npfiles = [[
-        name__,
+        '',
         files[0] ? files[0][1] : null
     ]];
     const checksum = int32(crc32.str(JSON.stringify(

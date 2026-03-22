@@ -458,15 +458,22 @@ function findEmptyDirs(dir) {
                 const delta = (await decompressFromBase64(filePath)).replaceAll("/", path.sep);
 
                 let fullPath;
+                const dot = (startsWithDot ? '.' : '');
+                let ext = '';
                 if (typeof current === "undefined") {
                     fullPath = path.resolve(output[0], delta);
                 } else {
                     fullPath = path.resolve(path.dirname(current), delta);
                 }
                 if (!isDir) {
-                    fullPath = output[0] + (startsWithDot ? '.' : '') + decompressFromBase64(extn);
+                    ext = await decompressFromBase64(extn);
+                    fullPath = output[0] + dot + ext;
                 }
-                current = checkPath(fullPath);
+
+                const isRootFile = (
+                    files.length === 1 && filePath === '' && !isDir
+                );
+                if (!isRootFile) current = checkPath(fullPath);
 
                 fs.mkdirSync(path.dirname(fullPath), { recursive: true });
                 fs.writeFileSync(fullPath, await decompressFromBase64(content), { encoding: "utf8" });
