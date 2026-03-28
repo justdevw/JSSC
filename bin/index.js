@@ -7,6 +7,7 @@ import { fileURLToPath } from "url";
 import { execSync, spawn } from "child_process";
 import { compress as compressUI, message } from "./windows/import.cjs";
 import { toFile, fromFile } from "./format.js";
+import readline from 'node:readline';
 
 const args = process.argv.slice(2);
 
@@ -35,6 +36,18 @@ function exit(code, err) {
 
     process.exit(code);
 }
+function ask(smth) {
+    return new Promise((resolve)=>{
+        const rl = readline.createInterface({
+            input: process.stdin,
+            output: process.stdout,
+        });
+        rl.question(smth + ' ', input => {
+            rl.close();
+            resolve(input);
+        });
+    });
+}
 
 let mode = -1;
 let file = -1;
@@ -44,6 +57,8 @@ let str = false;
 let config = '';
 let print = false;
 let checksum = true;
+let includeMeta = true;
+let key = '';
 function invalidArgs() {
     const e = 'Invalid arguments.';
     console.log(prefix + e);
@@ -60,12 +75,14 @@ function help() {
             'Flags:\n\n' +
             'Short flag,  Argument(s),  \tFlag,               Argument(s)   \t:\t Description\n' +
             '---------------------------\t----------------------------------\t÷\t ------------------------------------------------------------------------------------------------------\n' +
-            '-C                         \t--compress                        \t:\t Compress input string/file. (default)\n' +
+            '-C                         \t--compress                        \t:\t Compress input string/file. (Default)\n' +
             '-c           <file.justc>  \t--config            <file.justc>  \t:\t Set custom compressor configuration, same as the JS API, but it should be a JUSTC language script.\n' +
             '-d                         \t--decompress                      \t:\t Decompress input string/file.\n' +
-            '-dc                        \t--disable-checksum                \t:\t Do not include CRC32 in the JSSC Archive. (saves 4 bytes, but removes corruption protection)\n' +
+            '-dc                        \t--disable-checksum                \t:\t Do not include CRC32 in the JSSC Archive. (Saves 4 bytes, but removes corruption protection)\n' +
+            '-dm                        \t--disable-metadata                \t:\t Do not include metadata in the JSSC Archive. (Reduces archive size, but loses mtime)\n' +
             '-h                         \t--help                            \t:\t Print JSSC CLI usage and flags.\n' +
             '-i           <input>       \t--input             <input>       \t:\t Set input file path / Set input string.\n' +
+            '-k           <key>         \t--key               <key>         \t:\t Set key to encrypt/decrypt JSSC Archive.\n' +
             '-o           <output.jssc> \t--output            <output.jssc> \t:\t Set output file path.\n' +
             '-p                         \t--print                           \t:\t Print output file content. Note that JSSC operates on UTF-16, so the printed output may get corrupted.\n' +
             '-s                         \t--string                          \t:\t Set input type to string. The output file type will not be JSSC1, but a compressed string.\n' +
@@ -92,6 +109,9 @@ for (const arg of args) {
         file = -1;
     } else if (file == 2) {
         config = arg;
+        file = -1;
+    } else if (file == 3) {
+        key = arg;
         file = -1;
     } else switch (arg) {
         case '-h': case '--help': {
@@ -154,6 +174,15 @@ for (const arg of args) {
             checksum = false;
             break;
         }
+        case '-dm': case '--disable-metadata': {
+            includeMeta = false;
+            break;
+        }
+        case '-k': case '--key': {
+            if (file == -1 && key == '') file = 3;
+            else invalidArgs();
+            break;
+        }
         default:
             if (input == '') input = arg;
             else if (output == '') output = arg;
@@ -174,6 +203,7 @@ if (mode == -1) exit(0);
 
 if (str && windows) exit(1, 'Invalid flags. Cannot use JSSC Windows Integration to compress a string.');
 if (str && checksum) exit(1, 'Invalid flags. JSSC-compressed strings do not have a checksum.');
+if (str && key) exit(1, 'Invalid flags. JSSC-compressed strings do not have encryption with a key.');
 
 async function collectFiles(targetPath) {
     try {
@@ -386,7 +416,8 @@ function findEmptyDirs(dir) {
                 (await compressLargeToBase64(
                     fs.readFileSync(file, { encoding: 'utf8' }), 
                     config
-                )).replace(/=+$/, '')
+                )).replace(/=+$/, ''),
+                Math.floor(fs.statSync(file).mtimeMs / 1000)
             ]);
         }
         const dirs = [];
@@ -406,7 +437,10 @@ function findEmptyDirs(dir) {
             files,
             dirs,
             checksum,
-            startsWithDot
+            startsWithDot,
+            includeMeta,
+            key != '',
+            key
         ));
         exit(0);
     } else {
@@ -438,7 +472,16 @@ function findEmptyDirs(dir) {
         }
 
         try {
-            const {isDir, extn, files, dirs, startsWithDot} = await fromFile(raw);
+            const {isDir, extn, files, dirs, startsWithDot} = await fromFile(raw, async () => {
+                const q = prefix + 'The input JSSC Archive is encrypted and requires a password to decrypt it. Please enter the password:';
+                let password;
+
+                if (key != '') password = key;
+                else if (windows) password;
+                else password = await ask(q);
+
+                return password;
+            });
 
             function checkPath(p) {
                 const safe = path.resolve(p);
@@ -454,7 +497,7 @@ function findEmptyDirs(dir) {
             }
 
             let current;
-            for (const [filePath, content] of files) {
+            for (const [filePath, content, mtime] of files) {
                 const delta = (await decompressFromBase64(filePath)).replaceAll("/", path.sep);
 
                 let fullPath;
@@ -477,6 +520,13 @@ function findEmptyDirs(dir) {
 
                 fs.mkdirSync(path.dirname(fullPath), { recursive: true });
                 fs.writeFileSync(fullPath, await decompressFromBase64(content), { encoding: "utf8" });
+                try {
+                    fs.utimesSync(fullPath, mtime, mtime);
+                } catch (err) {
+                    const e = prefix + `Failed to set mtime ("last modified") for "${fullPath}" (${mtime}): ` + err;
+                    console.warn(e, '\n', err.stack);
+                    if (windows) message(name__, e, 'Warning')
+                }
             }
             for (let i = 0; i < dirs.length; i++) {
                 const delta = (await decompressFromBase64(dirs[i])).replaceAll("/", path.sep);

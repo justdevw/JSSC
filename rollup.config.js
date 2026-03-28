@@ -92,7 +92,8 @@ export default [
             'url',
             'child_process',
             'os',
-            'https'
+            'https',
+            'node:readline'
         ]
     },
     {
@@ -117,7 +118,8 @@ export default [
             'url',
             'child_process',
             'os',
-            'https'
+            'https',
+            'node:readline'
         ]
     },
     {
@@ -142,7 +144,8 @@ export default [
             'url',
             'child_process',
             'os',
-            'https'
+            'https',
+            'node:readline'
         ]
     }
 ]
