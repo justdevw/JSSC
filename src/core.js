@@ -2,15 +2,13 @@ import JUSTC from 'justc';
 import { name__, prefix } from '../lib/meta.js';
 
 import { 
-    stringCodes, 
-    codesString,
+    stringCodes,
     charCode,
     checkChar,
     stringChunks,
     chunkArray,
     decToBin,
-    binToDec,
-    B64Padding
+    binToDec
 } from '../lib/utils.js';
 import { freqMap, freqMapSplitters } from './modes/freqMap.js';
 import { segments, splitGraphemes } from './modes/segmentation.js';
@@ -827,9 +825,11 @@ export async function decompress(str, stringify = false) {
                 case 3: { /* Chunkification */
                     let i = 0;
                     while (i < realstr.length) {
-                        const length = realstr.charCodeAt(i) + i;
+                        const len = realstr.charCodeAt(i);
                         i++;
-                        output.push(await decompress(realstr.slice(i, length)));
+                        const chunk = realstr.slice(i, i + len);
+                        output.push(await decompress(chunk));
+                        i += len;
                     }
                     return checkOutput(output.join(''));
                 }
@@ -875,7 +875,7 @@ function noDebugMode(result) {
 
 export async function compressToBase64(...input) {
     const compressed = noDebugMode(await compress(...input));
-    return B64Padding(encode(compressed));
+    return encode(compressed);
 }
 export async function decompressFromBase64(base64, ...params) {
     return noDebugMode(await decompress(decode(base64.replace(/=+$/, '')), ...params));
@@ -901,7 +901,7 @@ export async function compressLarge(input, ...params) {
     const LENGTH = 1024;
     if (input.length < LENGTH || typeof input != 'string') return await compress(input, ...params);
 
-    const result = [charCode(cryptCharCode(11, false, false, false, undefined, undefined, false, 3))];
+    const result = [charCode(cryptCharCode(11, false, false, false, -1, 3, false))];
     
     for (let i = 0; i < input.length; i += LENGTH) {
         const chunk = input.slice(i, i + LENGTH);
@@ -913,7 +913,7 @@ export async function compressLarge(input, ...params) {
 }
 export async function compressLargeToBase64(...input) {
     const compressed = await compressLarge(...input);
-    return B64Padding(encode(compressed));
+    return encode(compressed);
 }
 export async function compressLargeToBase64URL(...input) {
     const compressed = await compressLarge(...input);
