@@ -385,10 +385,12 @@ const instance = windows ? new JSSC() : {
             if (path.parse(input[0]).name != extname) extn = extname;
         }
 
+        let total = 0;
+        let all = 0;
         if (windows) {
             WinUIWait = winUIWait('Compressing "' + path.parse(inp).name + '"...');
             instance.events.onCompressProgress = (percentage) => {
-                WinUIWait.stdin.write(percentage + "\n");
+                WinUIWait.stdin.write((total + percentage / all) + "\n");
             };
         }
 
@@ -417,7 +419,15 @@ const instance = windows ? new JSSC() : {
         }
 
         const files = [];
-        for (const file of input.sort((a,b)=>a.localeCompare(b))) {
+        const inputFiles = input.sort((a,b)=>a.localeCompare(b));
+        all += inputFiles.length * 2;
+        const dirs = [];
+        const inputDirs = findEmptyDirs(inp);
+        all += inputDirs.length;
+        const includeExtn = extn != '';
+        if (includeExtn) all += 1;
+
+        for (const file of inputFiles) {
             const current = p(file);
 
             files.push([
@@ -428,11 +438,12 @@ const instance = windows ? new JSSC() : {
                 )).replace(/=+$/, ''),
                 Math.floor(fs.statSync(file).mtimeMs / 1000)
             ]);
+            total += 2;
         }
-        const dirs = [];
-        for (const dir of findEmptyDirs(inp)) {
+        for (const dir of inputDirs) {
             const current = p(dir);
             dirs.push((await instance.compressToBase64(current, config)).replace(/=+$/, ''));
+            total += 1;
         }
         
         const startsWithDot = extn[0] == '.';
@@ -440,9 +451,9 @@ const instance = windows ? new JSSC() : {
             addFormat ? format : ''
         ), await toFile(
             isDir,
-            extn == '' ? null : (await instance.compressToBase64(
+            includeExtn ? (await instance.compressToBase64(
                 startsWithDot ? extn.slice(1) : extn, config
-            )).replace(/=+$/, ''),
+            )).replace(/=+$/, '') : null,
             files,
             dirs,
             checksum,
