@@ -537,7 +537,7 @@ function getInpName(inp) {
                         } catch (_) {
                             return true;
                         }
-                    })) exit(0);
+                    })()) exit(0);
                     WinUIWait = winUIWait('Decompressing "' + getInpName(inp) + '"...');
                 } else password = await ask(q);
 
