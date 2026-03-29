@@ -162,9 +162,12 @@ function makeSemVer([major, minor, patch]) {
     return new SemVer(major + '.' + minor + '.' + patch);
 }
 
-function corrupted(isEncrypted, extra) {
+function corrupted(isEncrypted, isWindows, extra) {
     throw new Error(prefix+(
-        isEncrypted ? 'Input key is invalid or i' : 'I'
+        isEncrypted ? (
+            isWindows ? 'Password is incorrect' :
+            'Input key is invalid'
+        ) + ' or i' : 'I'
     )+'nput file is corrupted.'+(
         extra ? ' ('+extra+')' : ''
     ));
@@ -173,8 +176,9 @@ function corrupted(isEncrypted, extra) {
 /**
  * @param {Uint8Array<ArrayBuffer>} uint8
  * @param {() => Promise<string>} onEncrypted
+ * @param {boolean} isWindows
  */
-export async function fromFile(uint8, onEncrypted) {
+export async function fromFile(uint8, onEncrypted, isWindows) {
     const d = new TextDecoder();
 
     const filetype = d.decode(uint8.subarray(0,5));
@@ -212,14 +216,14 @@ export async function fromFile(uint8, onEncrypted) {
     let func = fromInt32;
     function read() {
         if (i >= uint8.length) return null;
-        if (i + legnthLength > uint8.length) corrupted(encrypted);
+        if (i + legnthLength > uint8.length) corrupted(encrypted, isWindows);
 
         const length = func(uint8.subarray(i, i + legnthLength));
         i += legnthLength;
 
         if (length == 0) return 0;
 
-        if (i + length > uint8.length) corrupted(encrypted);
+        if (i + length > uint8.length) corrupted(encrypted, isWindows);
 
         const data = UI8AtoB64(uint8.subarray(i, i + length));
         i += length;
@@ -242,7 +246,7 @@ export async function fromFile(uint8, onEncrypted) {
         if (path == null) break;
 
         const content = read();
-        if (content == null) corrupted(encrypted);
+        if (content == null) corrupted(encrypted, isWindows);
 
         if (content == 0) dirs.push(path);
         else {
@@ -250,7 +254,7 @@ export async function fromFile(uint8, onEncrypted) {
 
             if (hasMeta) {
                 const mtime = read();
-                if (mtime == null || mtime == 0) corrupted(encrypted);
+                if (mtime == null || mtime == 0) corrupted(encrypted, isWindows);
 
                 outputFile.push(parseInt(convertBase(mtime, 64, 10), 10));
             } else outputFile.push(Math.floor(Date.now() / 1000));
@@ -262,7 +266,7 @@ export async function fromFile(uint8, onEncrypted) {
     }
 
     if (typeof checksum != 'undefined' && checksum != crc32.str(JSON.stringify(files))) {
-        corrupted(encrypted, 'CRC32');
+        corrupted(encrypted, isWindows, 'CRC32');
     }
 
     return {
