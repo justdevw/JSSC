@@ -542,7 +542,7 @@ function getInpName(inp) {
                 } else password = await ask(q);
 
                 return password;
-            });
+            }, windows);
 
             function checkPath(p) {
                 const safe = path.resolve(p);
