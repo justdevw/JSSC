@@ -286,6 +286,13 @@ const instance = windows ? new JSSC() : {
     compressLargeToBase64, compressToBase64, decompressFromBase64
 };
 
+function getInpName(inp) {
+    let inpPath = path.parse(inp);
+	let inpName = inpPath.name + inpPath.ext;
+	if (inpName.length > 27) inpName = inpName.slice(0, 24) + '...';
+    return inpName;
+}
+
 (async (inp, out, cfg) => {
     const inpF = await collectFiles(inp);
     const isFile = !str ? inpF != null : !str;
@@ -387,11 +394,15 @@ const instance = windows ? new JSSC() : {
 
         let total = 0;
         let all = 0;
+        let last = 0;
         if (windows) {
-            WinUIWait = winUIWait('Compressing "' + path.parse(inp).name + '"...');
+            WinUIWait = winUIWait('Compressing "' + getInpName(inp) + '"...');
             instance.events.onCompressProgress = (percentage) => {
-                WinUIWait.stdin.write(((total + percentage / 100) / all) * 100 + "\n");
+                const p = Math.max(Math.floor(((total + percentage / 100) / all) * 100), last);
+                last = p;
+                if (WinUIWait) WinUIWait.stdin.write(p + "\n");
             };
+            setInterval(()=>{if(WinUIWait){WinUIWait.stdin.write(last + "\n")}}, 50); /* ping ui to avoid ui lag */
         }
 
         config.stringify = undefined;
@@ -470,7 +481,7 @@ const instance = windows ? new JSSC() : {
             exit(1, e);
         }
         if (windows) {
-            WinUIWait = winUIWait('Decompressing "' + path.parse(inp).name + '"...');
+            WinUIWait = winUIWait('Decompressing "' + getInpName(inp) + '"...');
         }
 
         const raw = isFile ? fs.readFileSync(input[0]) : input[0];
