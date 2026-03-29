@@ -100,7 +100,7 @@ export function decompress(title) {
     try {
         const cmd = `pwsh -ExecutionPolicy Bypass -File "${decomprPs1}" ` +
                     `-Name "${title}" ` +
-                    `-Text ""`;
+                    `-Text "Password"`;
         const stdout = execSync(cmd).toString();
         if (stdout) {
             const result = JSON.parse(stdout.trim());

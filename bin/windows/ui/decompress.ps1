@@ -8,6 +8,9 @@ Add-Type -AssemblyName System.Drawing
 Add-Type -AssemblyName PresentationFramework
 Add-Type -AssemblyName WindowsFormsIntegration
 
+$back = Get-Content -Path "$PSScriptRoot\roundCorners.cs" -Raw
+$Win32 = Add-Type -MemberDefinition $back -Name "Win32" -PassThru
+
 [Windows.Forms.Application]::EnableVisualStyles()
 
 $form = New-Object Windows.Forms.Form

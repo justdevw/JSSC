@@ -528,6 +528,7 @@ function getInpName(inp) {
 
                 if (key != '') password = key;
                 else if (windows) {
+                    if (WinUIWait) WinUIWait.kill();
                     const res = decompressUI(name__);
                     if (!res[0] || (()=>{
                         try {
@@ -537,6 +538,7 @@ function getInpName(inp) {
                             return true;
                         }
                     })) exit(0);
+                    WinUIWait = winUIWait('Decompressing "' + getInpName(inp) + '"...');
                 } else password = await ask(q);
 
                 return password;
