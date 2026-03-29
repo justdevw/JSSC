@@ -24,7 +24,7 @@ function winUIWait(text) {
         "-File", _winUIWait,
         "-Name", name__,
         "-Text", text
-    ], { detached: false, stdio: 'ignore' });
+    ], { detached: false, stdio: ['pipe','ignore','ignore'] });
 }
 
 let WinUIWait = false;
@@ -387,7 +387,9 @@ const instance = windows ? new JSSC() : {
 
         if (windows) {
             WinUIWait = winUIWait('Compressing "' + path.parse(inp).name + '"...');
-            instance.events.onCompressProgress = (percentage) => {console.log(percentage, '%')}
+            instance.events.onCompressProgress = (percentage) => {
+                WinUIWait.stdin.write(percentage + "\n");
+            };
         }
 
         config.stringify = undefined;
@@ -456,7 +458,9 @@ const instance = windows ? new JSSC() : {
             console.log(prefix + e);
             exit(1, e);
         }
-        if (windows) WinUIWait = winUIWait('Decompressing "' + path.parse(inp).name + '"...');
+        if (windows) {
+            WinUIWait = winUIWait('Decompressing "' + path.parse(inp).name + '"...');
+        }
 
         const raw = isFile ? fs.readFileSync(input[0]) : input[0];
 
