@@ -1,5 +1,10 @@
 -- Default configuration options for JavaScript String Compressor
 
+-- Archive options
+checksum = y,
+metadata = y,
+encrypt = n,
+
 -- Compress options
 JUSTC = y,
 recursiveCompression = y,

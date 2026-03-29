@@ -9,6 +9,7 @@ const uiDir = path.resolve(__dirname, "./ui");
 const confirmPs1 = path.resolve(uiDir, "./confirm.ps1");
 const welcomePs1 = path.resolve(uiDir, "./welcome.ps1");
 const compresPs1 = path.resolve(__dirname, "./windows/ui/compress.ps1");
+const decomprPs1 = path.resolve(__dirname, "./windows/ui/decompress.ps1");
 
 export function confirm(title, text, repo, site) {
     try {
@@ -64,6 +65,9 @@ export function compress(title, name, icon, config) {
             5: config.base64Packing,
             6: config.offsetEncoding,
             7: config.lzstring,
+            8: config.checksum,
+            9: config.metadata,
+            10: config.encrypt
         }
 
         const cmd = `pwsh -ExecutionPolicy Bypass -File "${compresPs1}" ` +
@@ -76,13 +80,31 @@ export function compress(title, name, icon, config) {
                     `-CheckDefault4 ${cd[4] ? 1 : 0} ` +
                     `-CheckDefault5 ${cd[5] ? 1 : 0} ` +
                     `-CheckDefault6 ${cd[6] ? 1 : 0} ` +
-                    `-CheckDefault7 ${cd[7] ? 1 : 0}`;
+                    `-CheckDefault7 ${cd[7] ? 1 : 0} ` +
+                    `-CheckDefault8 ${cd[8] ? 1 : 0} ` +
+                    `-CheckDefault9 ${cd[9] ? 1 : 0} ` +
+                    `-CheckDefault10 ${cd[10] ? 1 : 0}`;
 
         const stdout = execSync(cmd).toString();
         
         if (stdout) {
             const result = JSON.parse(stdout.trim());
             return [true, result];
+        }
+    } catch {
+        return [false, null];
+    }
+}
+
+export function decompress(title) {
+    try {
+        const cmd = `pwsh -ExecutionPolicy Bypass -File "${decomprPs1}" ` +
+                    `-Name "${title}" ` +
+                    `-Text ""`;
+        const stdout = execSync(cmd).toString();
+        if (stdout) {
+            const result = JSON.parse(stdout.trim());
+            return [true, result.password];
         }
     } catch {
         return [false, null];

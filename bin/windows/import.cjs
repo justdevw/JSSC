@@ -1,12 +1,14 @@
 if (process.platform !== "win32") module.exports = {
-    compress: () => {},
-    message : () => {}
+    compress  : () => {},
+    message   : () => {},
+    decompress: () => {},
 }; else {
-    const { compress } = require("./ui");
+    const { compress, decompress } = require("./ui");
     const { message } = require("./message");
 
     module.exports = {
         compress,
-        message
+        message,
+        decompress
     };
 }

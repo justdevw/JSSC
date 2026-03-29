@@ -7,6 +7,9 @@ param (
     [string]$CheckDefault5 = "0",
     [string]$CheckDefault6 = "0",
     [string]$CheckDefault7 = "0",
+    [string]$CheckDefault8 = "0",
+    [string]$CheckDefault9 = "0",
+    [string]$CheckDefault10 = "0",
     [string]$Title = "",
     [string]$FileName = ""
 )
@@ -18,6 +21,9 @@ $IsChecked4 = ($CheckDefault4 -eq "1")
 $IsChecked5 = ($CheckDefault5 -eq "1")
 $IsChecked6 = ($CheckDefault6 -eq "1")
 $IsChecked7 = ($CheckDefault7 -eq "1")
+$IsChecked8 = ($CheckDefault8 -eq "1")
+$IsChecked9 = ($CheckDefault9 -eq "1")
+$IsChecked10 = ($CheckDefault10 -eq "1")
 
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
@@ -94,6 +100,13 @@ $CheckBox6 = New-Object system.Windows.Forms.CheckBox
 $CheckBox6.Text, $CheckBox6.Location, $CheckBox6.Checked, $CheckBox6.AutoSize = "Offset Encoding", (New-Object System.Drawing.Point(15,181)), $IsChecked6, $true
 $CheckBox7 = New-Object system.Windows.Forms.CheckBox
 $CheckBox7.Text, $CheckBox7.Location, $CheckBox7.Checked, $CheckBox7.AutoSize = "lz-string", (New-Object System.Drawing.Point(15,201)), $IsChecked7, $true
+
+$CheckBox8 = New-Object system.Windows.Forms.CheckBox
+$CheckBox8.Text, $CheckBox8.Location, $CheckBox8.Checked, $CheckBox8.AutoSize = "Checksum", (New-Object System.Drawing.Point(235,81)), $IsChecked8, $true
+$CheckBox9 = New-Object system.Windows.Forms.CheckBox
+$CheckBox9.Text, $CheckBox9.Location, $CheckBox9.Checked, $CheckBox9.AutoSize = "Metadata", (New-Object System.Drawing.Point(235,101)), $IsChecked9, $true
+$CheckBox10= New-Object system.Windows.Forms.CheckBox
+$CheckBox10.Text,$CheckBox10.Location,$CheckBox10.Checked,$CheckBox10.AutoSize= "Encrypt", (New-Object System.Drawing.Point(240,130)), $IsChecked10, $true
 
 $Label4                          = New-Object system.Windows.Forms.Label
 $Label4.text                     = "Options"
@@ -199,6 +212,28 @@ $elhost = New-Object System.Windows.Forms.Integration.ElementHost
 $elhost.Dock = [System.Windows.Forms.DockStyle]::Fill
 $elhost.Child = $wpfSlider
 
+$Label8                          = New-Object system.Windows.Forms.Label
+$Label8.text                     = "Password"
+$Label8.AutoSize                 = $true
+$Label8.width                    = 25
+$Label8.height                   = 10
+$Label8.location                 = New-Object System.Drawing.Point(240,150)
+$Label8.Font                     = New-Object System.Drawing.Font('Microsoft JhengHei',10)
+
+$InputBox = New-Object System.Windows.Forms.TextBox
+$InputBox.Text = ""
+$InputBox.Location = New-Object System.Drawing.Point(240, 170)
+$InputBox.Width = 170
+$InputBox.Font = New-Object System.Drawing.Font('Microsoft JhengHei', 10)
+
+$Label7                          = New-Object system.Windows.Forms.Label
+$Label7.text                     = "Archive options"
+$Label7.AutoSize                 = $true
+$Label7.width                    = 25
+$Label7.height                   = 10
+$Label7.location                 = New-Object System.Drawing.Point(230,54)
+$Label7.Font                     = New-Object System.Drawing.Font('Microsoft JhengHei',12)
+
 $panel = New-Object System.Windows.Forms.Panel
 $panel.Location = New-Object System.Drawing.Point(20, 320)
 $panel.Size = New-Object System.Drawing.Size(400, 18)
@@ -210,6 +245,30 @@ $Panel1.add_HandleCreated({
     $hRgn = $Win32::CreateRoundRectRgn(0, 0, $this.Width, $this.Height, 10, 10)
     $this.Region = [System.Drawing.Region]::FromHrgn($hRgn)
 })
+
+$Panel2 = New-Object system.Windows.Forms.Panel
+$Panel2.height, $Panel2.width, $Panel2.location = 80, 182, (New-Object System.Drawing.Point(235,125))
+$Panel2.add_HandleCreated({
+    $hRgn = $Win32::CreateRoundRectRgn(0, 0, $this.Width, $this.Height, 10, 10)
+    $this.Region = [System.Drawing.Region]::FromHrgn($hRgn)
+})
+$Panel3 = New-Object system.Windows.Forms.Panel
+$Panel3.height, $Panel3.width, $Panel3.location = 84, 186, (New-Object System.Drawing.Point(233,123))
+$Panel3.add_HandleCreated({
+    $hRgn = $Win32::CreateRoundRectRgn(0, 0, $this.Width, $this.Height, 12, 12)
+    $this.Region = [System.Drawing.Region]::FromHrgn($hRgn)
+})
+
+function UpdateEncryption {
+    $InputBox.Enabled = $CheckBox10.Checked
+    if ($CheckBox10.Checked) {
+        $Panel3.BackColor = [System.Drawing.Color]::FromArgb(150, 81, 90, 218)
+    } else {
+        $Panel3.BackColor = [System.Drawing.Color]::FromArgb(0, 239, 213, 255)
+    }
+}
+UpdateEncryption
+$CheckBox10.add_CheckedChanged({UpdateEncryption})
 
 $Button1                         = New-Object system.Windows.Forms.Button
 $Button1.text                    = "Compress"
@@ -224,14 +283,16 @@ $Button1.add_HandleCreated({
     $this.Region = [System.Drawing.Region]::FromHrgn($hRgn)
 })
 
-$Form.Controls.AddRange(@($Button1, $CheckBox1, $Label4, $Label1, $Panel1, $CheckBox2, $CheckBox3, $CheckBox4, $CheckBox5, $CheckBox6, $CheckBox7, $Label2, $panel, $Label3, $Label5, $Label6))
+$Form.Controls.AddRange(@($Button1, $CheckBox1, $Label4, $Label1, $Panel1, $CheckBox2, $CheckBox3, $CheckBox4, $CheckBox5, $CheckBox6, $CheckBox7, $Label2, $panel, $Label3, $Label5, $Label6, $Label7, $CheckBox8, $CheckBox9, $CheckBox10, $InputBox, $Label8, $Panel2, $Panel3))
 if ($addImage) { $Form.Controls.Add($PictureBox1) }
 
 $Form.AcceptButton = $Button1
+$Panel2.SendToBack()
+$Panel3.SendToBack()
 $Panel1.SendToBack()
 
 $clr = [System.Drawing.Color]::FromArgb(175, 255, 255, 255)
-foreach ($ctl in @($Panel1, $CheckBox1, $Label4, $Label1, $PictureBox1, $CheckBox2, $CheckBox3, $CheckBox4, $CheckBox5, $CheckBox6, $CheckBox7, $Label2, $Label3, $Label5, $Label6)) {
+foreach ($ctl in @($Panel1, $CheckBox1, $Label4, $Label1, $PictureBox1, $CheckBox2, $CheckBox3, $CheckBox4, $CheckBox5, $CheckBox6, $CheckBox7, $Label2, $Label3, $Label5, $Label6, $Label7, $CheckBox8, $CheckBox9, $Panel2, $CheckBox10, $Label8)) {
     $ctl.BackColor = $clr
 }
 foreach ($ctl in @($elhost, $panel)) {
@@ -248,6 +309,10 @@ if ($result -eq "OK") {
         checked5 = $CheckBox5.Checked
         checked6 = $CheckBox6.Checked
         checked7 = $CheckBox7.Checked
+        checked8 = $CheckBox8.Checked
+        checked9 = $CheckBox9.Checked
+        checked10 = $CheckBox10.Checked
+        password = $InputBox.Text
         slider = $wpfSlider.Value
     }
     Write-Output ($output | ConvertTo-Json -Compress)

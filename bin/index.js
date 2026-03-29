@@ -5,7 +5,7 @@ import { prefix, version, format, name__ } from "../lib/meta.js";
 import JUSTC from "justc";
 import { fileURLToPath } from "url";
 import { execSync, spawn } from "child_process";
-import { compress as compressUI, message } from "./windows/import.cjs";
+import { compress as compressUI, message, decompress as decompressUI } from "./windows/import.cjs";
 import { toFile, fromFile } from "./format.js";
 import readline from 'node:readline';
 
@@ -352,6 +352,12 @@ function getInpName(inp) {
             console.log(prefix + e);
             exit(1, e);
         }
+        let windowsConfig = {
+            checksum: undefined,
+            metadata: undefined,
+            encrypt: undefined,
+            password: undefined
+        };
         if (!(()=>{
             if (!windows || !isFile) return true;
 
@@ -374,6 +380,11 @@ function getInpName(inp) {
                 customConfig.lzstring = res[1].checked7;
 
                 customConfig.depthLimit = Math.max(res[1].slider, 1);
+
+                windowsConfig.checksum = res[1].checked8;
+                windowsConfig.metadata = res[1].checked9;
+                windowsConfig.encrypt = res[1].checked10;
+                windowsConfig.password = res[1].password;
 
                 config = {
                     ...config,
@@ -456,6 +467,12 @@ function getInpName(inp) {
             dirs.push((await instance.compressToBase64(current, config)).replace(/=+$/, ''));
             total += 1;
         }
+
+        if (windows) {
+            if (typeof windowsConfig.checksum == 'boolean') checksum = windowsConfig.checksum;
+            if (typeof windowsConfig.metadata == 'boolean') includeMeta = windowsConfig.metadata;
+            if (typeof windowsConfig.encrypt == 'boolean' && windowsConfig.encrypt && typeof windowsConfig.password == 'string') key = windowsConfig.password;
+        }
         
         const startsWithDot = extn[0] == '.';
         fs.writeFileSync(output[0] + (
@@ -510,8 +527,17 @@ function getInpName(inp) {
                 let password;
 
                 if (key != '') password = key;
-                else if (windows) password;
-                else password = await ask(q);
+                else if (windows) {
+                    const res = decompressUI(name__);
+                    if (!res[0] || (()=>{
+                        try {
+                            password = res[1];
+                            return false;
+                        } catch (_) {
+                            return true;
+                        }
+                    })) exit(0);
+                } else password = await ask(q);
 
                 return password;
             });

@@ -65,18 +65,18 @@ $timer = New-Object Windows.Forms.Timer
 $timer.Interval = 100
 
 $idleTicks = 0
+$idleTimer = New-Object Windows.Forms.Timer
+$idleTimer.Interval = 5000
+$idleTimer.Add_Tick({
+    if ($idleTicks -ge 0) {
+        $wpfProgress.IsIndeterminate = $true
+    }
+    $idleTicks = 0
+    $idleTimer.Stop()
+})
 function Idle {
     $idleTicks++
-    $timeout = New-Object Windows.Forms.Timer
-    $timeout.Interval = 3000
-    $timeout.Add_Tick({
-        if ($idleTicks -ge 0) {
-            $wpfProgress.IsIndeterminate = $true
-        } else {
-            $timeout.Stop()
-        }
-    })
-    $timeout.Start()
+    $idleTimer.Start()
 }
 
 $timer.Add_Tick({
