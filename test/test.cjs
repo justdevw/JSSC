@@ -111,6 +111,15 @@ const tests = async function () {
     await runTest(String(Math.round(Math.random() * 256000000)), 'random numbers');
     await runTest('asdasdsasdsadsdadsadssssssssssssssssssssыꙮ'.repeat(15), 'absolutely random stuff');
     await runTest('aaaaaaaaaaaaaaa1ыыыыыыыыыыыыыꙮ'.repeat(30), 'should use recursive compression mode');
+    const Instance = new JSSC.JSSC();
+    let count = 0;
+    Instance.events.onCompressed = (i, o) => {console.log('onCompressed:\n\tInput:',i,'\n\tOutput:',o);count++};
+    Instance.events.onCompressProgress = (p) => {console.log('onCompressProgress:',p,'%');count++};
+    Instance.events.onCompressionMode = (m, i, o) => {console.log('onCompressionMode:\n\tMode ID:',m,'\n\tInput:',i,'\n\tOutput:',o);count++};
+    Instance.events.onDecompressed = (i, o) => {console.log('onDecompressed:\n\tInput:',i,'\n\tOutput:',o);count++};
+    console.log('-'.repeat(100), '\nJSSC Instance event listeners test\nInstance ID:', Instance.ID,'\nEvents:',Instance.events);
+    await Instance.compress('test');
+    setTimeout(()=>console.log(count),1000)
 }
 
 tests().then(()=>{});

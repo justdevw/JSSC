@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { compress, decompress, compressLargeToBase64, compressToBase64, decompressFromBase64 } from "../src/index.js";
+import { compress, decompress, compressLargeToBase64, compressToBase64, decompressFromBase64, JSSC } from "../src/index.js";
 import { prefix, version, format, name__ } from "../lib/meta.js";
 import JUSTC from "justc";
 import { fileURLToPath } from "url";
@@ -282,6 +282,10 @@ function findEmptyDirs(dir) {
     return emptyDirs;
 }
 
+const instance = windows ? new JSSC() : {
+    compressLargeToBase64, compressToBase64, decompressFromBase64
+};
+
 (async (inp, out, cfg) => {
     const inpF = await collectFiles(inp);
     const isFile = !str ? inpF != null : !str;
@@ -381,7 +385,10 @@ function findEmptyDirs(dir) {
             if (path.parse(input[0]).name != extname) extn = extname;
         }
 
-        if (windows) WinUIWait = winUIWait('Compressing "' + path.parse(inp).name + '"...');
+        if (windows) {
+            WinUIWait = winUIWait('Compressing "' + path.parse(inp).name + '"...');
+            instance.events.onCompressProgress = (percentage) => {console.log(percentage, '%')}
+        }
 
         config.stringify = undefined;
 
@@ -412,8 +419,8 @@ function findEmptyDirs(dir) {
             const current = p(file);
 
             files.push([
-                (await compressToBase64(current, config)).replace(/=+$/, ''),
-                (await compressLargeToBase64(
+                (await instance.compressToBase64(current, config)).replace(/=+$/, ''),
+                (await instance.compressLargeToBase64(
                     fs.readFileSync(file, { encoding: 'utf8' }), 
                     config
                 )).replace(/=+$/, ''),
@@ -423,7 +430,7 @@ function findEmptyDirs(dir) {
         const dirs = [];
         for (const dir of findEmptyDirs(inp)) {
             const current = p(dir);
-            dirs.push((await compressToBase64(current, config)).replace(/=+$/, ''));
+            dirs.push((await instance.compressToBase64(current, config)).replace(/=+$/, ''));
         }
         
         const startsWithDot = extn[0] == '.';
@@ -431,7 +438,7 @@ function findEmptyDirs(dir) {
             addFormat ? format : ''
         ), await toFile(
             isDir,
-            extn == '' ? null : (await compressToBase64(
+            extn == '' ? null : (await instance.compressToBase64(
                 startsWithDot ? extn.slice(1) : extn, config
             )).replace(/=+$/, ''),
             files,
@@ -498,7 +505,7 @@ function findEmptyDirs(dir) {
 
             let current;
             for (const [filePath, content, mtime] of files) {
-                const delta = (await decompressFromBase64(filePath)).replaceAll("/", path.sep);
+                const delta = (await instance.decompressFromBase64(filePath)).replaceAll("/", path.sep);
 
                 let fullPath;
                 const dot = (startsWithDot ? '.' : '');
@@ -509,7 +516,7 @@ function findEmptyDirs(dir) {
                     fullPath = path.resolve(path.dirname(current), delta);
                 }
                 if (!isDir) {
-                    ext = await decompressFromBase64(extn);
+                    ext = await instance.decompressFromBase64(extn);
                     fullPath = output[0] + dot + ext;
                 }
 
@@ -519,7 +526,7 @@ function findEmptyDirs(dir) {
                 if (!isRootFile) current = checkPath(fullPath);
 
                 fs.mkdirSync(path.dirname(fullPath), { recursive: true });
-                fs.writeFileSync(fullPath, await decompressFromBase64(content), { encoding: "utf8" });
+                fs.writeFileSync(fullPath, await instance.decompressFromBase64(content), { encoding: "utf8" });
                 try {
                     fs.utimesSync(fullPath, mtime, mtime);
                 } catch (err) {
@@ -529,7 +536,7 @@ function findEmptyDirs(dir) {
                 }
             }
             for (let i = 0; i < dirs.length; i++) {
-                const delta = (await decompressFromBase64(dirs[i])).replaceAll("/", path.sep);
+                const delta = (await instance.decompressFromBase64(dirs[i])).replaceAll("/", path.sep);
 
                 let fullPath;
                 if (typeof current === "undefined") {

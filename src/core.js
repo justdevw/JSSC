@@ -30,6 +30,9 @@ import { validateCache, setCache } from './cache.js';
 import { compress as cAXOR, decompress as dAXOR } from './modes/axor.js';
 import { B64toUI8A, UI8AtoB64 } from '../lib/uint8.js';
 
+let JSSCInstanceID = 0n;
+const JSSCInstances = {};
+
 function cryptCharCode(
     code, get = false,
     repeatBefore = false, repeatAfter = false,
@@ -139,6 +142,9 @@ function readOptions(options, defaults) {
         if ((key == 'depth' || key.toLowerCase() == 'depthlimit' || key == 'worker' || key.toLowerCase() == 'workerlimit') && typeof value == 'number') {
             defaults[key.toLowerCase()] = value;
             continue;
+        } if (key == 'instance' && typeof value == 'string') {
+            defaults[key] = value;
+            continue;
         }
         if (typeof value == 'undefined') continue;
         if (typeof value != 'boolean') throw new Error(prefix+'Invalid options input.');
@@ -179,7 +185,7 @@ function getModeID(code1, code2) {
             return code1;
     }
 }
-class JSSC {
+class JSSCDebug {
     constructor (com, dec, opts, m = 0, workers = false) {
         const headerchar = decToBin(com.charCodeAt(0), 16);
         const code1 = headerchar.slice(11);
@@ -300,8 +306,40 @@ export async function compress(input, options) {
         debug: false,
 
         depth: 0,
-        worker: 0
+        worker: 0,
+
+        instance: undefined,
     };
+    
+    let progressAll = 0;
+    let progressModes = 0;
+    let progressMisc = 0;
+    let progressLast = 0;
+    const candidates = [
+        IIE,
+        DIP,
+        B64IE,
+        TDCCC,
+        TBCCC,
+        CE,
+        AE,
+        FM,
+        URL_,
+        S,
+        SR,
+        EP,
+        B64P,
+        OE,
+        LZS,
+        AXOR
+    ];
+    let done = candidates.length + 2;
+    function onProgress() {
+        if (typeof opts.instance != 'undefined' && progressAll != progressLast) {
+            progressLast = progressAll;
+            JSSCInstances[opts.instance].events['onCompressProgress'](Math.floor(progressAll / done * 100));
+        }
+    }
 
     /* Read options */
     if (options) opts = readOptions(options, opts);
@@ -396,6 +434,7 @@ export async function compress(input, options) {
         code3 = 3;
         }} catch (_) {
     }}
+    progressMisc++; progressAll++; onProgress();
 
     if (!/\d/.test(str)) {
         str = repeatChars(str);
@@ -424,12 +463,19 @@ export async function compress(input, options) {
     }
 
     const safeTry = async (fn) => {
+        let result = null;
         try {
-            return await fn();
+            result = await fn();
         } catch (err) {
             if (opts.debug) console.warn(err);
-            return null;
+            result = null;
         }
+        if (typeof opts.instance != 'undefined' && result) {
+            const modeID = (new JSSCDebug(result, input, opts, 0, false)).output.mode;
+            JSSCInstances[opts.instance].events['onCompressionMode'](modeID, input, result);
+            progressAll++; progressModes++; onProgress();
+        }
+        return result;
     };
 
     const validate = async (compressed) => {
@@ -445,26 +491,8 @@ export async function compress(input, options) {
     const context = {
         opts,
         str, isNum, code3, originalInput,
-        beginId, repeatBefore
+        beginId, repeatBefore,
     };
-    const candidates = [
-        IIE,
-        DIP,
-        B64IE,
-        TDCCC,
-        TBCCC,
-        CE,
-        AE,
-        FM,
-        URL_,
-        S,
-        SR,
-        EP,
-        B64P,
-        OE,
-        LZS,
-        AXOR
-    ];
     async function noWorkers() {
         return await Promise.all(candidates.map(fn => safeTry(async () => await fn(context))));
     }
@@ -493,6 +521,9 @@ export async function compress(input, options) {
         usedWorkers = false;
     }
 
+    if (progressModes != candidates.length) progressAll = progressMisc + candidates.length;
+    onProgress();
+
     results = results.filter(r => typeof r === 'string' && r.length <= String(originalInput).length);
 
     let best;
@@ -520,7 +551,11 @@ export async function compress(input, options) {
         if (await validateOffsetEncoding(res, best, enc[2])) best = res;
     }
 
-    if (opts.debug) return new JSSC(best, originalInput, opts, 0, usedWorkers);
+    progressAll++; progressMisc++; onProgress();
+
+    if (typeof opts.instance != 'undefined') JSSCInstances[opts.instance].events['onCompressed'](input, best);
+
+    if (opts.debug) return new JSSCDebug(best, originalInput, opts, 0, usedWorkers);
 
     return best;
 }
@@ -577,7 +612,9 @@ export async function decompress(str, stringify = false) {
     let opts = {
         stringify: false,
 
-        debug: false
+        debug: false,
+
+        instance: undefined,
     }
 
     /* Read options */
@@ -625,7 +662,8 @@ export async function decompress(str, stringify = false) {
     }
     
     function checkOutput(out) {
-        if (opts.debug) return new JSSC(s, out, opts, 1);
+        if (typeof opts.instance != 'undefined') JSSCInstances[opts.instance].events['onDecompressed'](str, out);
+        if (opts.debug) return new JSSCDebug(s, out, opts, 1);
         return out;
     }
     async function processOutput(out, checkOut = true) {
@@ -869,7 +907,7 @@ export async function decompress(str, stringify = false) {
 }
 
 function noDebugMode(result) {
-    if (result instanceof JSSC) throw new Error(prefix+'Invalid options input.');
+    if (result instanceof JSSCDebug) throw new Error(prefix+'Invalid options input.');
     return result;
 }
 
@@ -1330,7 +1368,8 @@ export async function S(context) {
         const segOpts = {
             ...opts,
             segmentation: false,
-            depth: opts.depth + 1
+            depth: opts.depth + 1,
+            instance: undefined
         }
         const compressed = await compress(seg, segOpts);
 
@@ -1467,7 +1506,8 @@ export async function OE(context) {
     const res = enc[1] + await compress(enc[0], {
         ...opts,
         offsetencoding: false,
-        depth: opts.depth + 1
+        depth: opts.depth + 1,
+        instance: undefined
     });
     if (await validateOffsetEncoding(res, originalInput, enc[2])) return res;
     return null;
@@ -1509,10 +1549,79 @@ export function setWorkerURL(url) {
                 }
             })()
         )
-    ) throw new Error(prefix+'invalid URL.');
+    ) throw new Error(prefix+'Invalid URL.');
     customWorkerURL = url;
 }
 export function getWorkerURL() {
     if (typeof customWorkerURL == 'string' || typeof customWorkerURL == 'object') return customWorkerURL;
     return workerURL;
+}
+
+/* JSSC Instance */
+
+function JSSCFunctions(id, ...functions) {
+    const output = [];
+    for (let i = 0; i < functions.length; i++) {
+        output.push(async (input, options, ...args) => {
+            let opts = options || {};
+            if (typeof options == 'boolean') opts = {stringify: options};
+            opts.instance = id;
+            return await functions[i](input, opts, ...args);
+        });
+    }
+    return output;
+}
+export const JSSC = class JSSC {
+    #events;
+    constructor(cloneInstanceID) {
+        const ID = convertBase((JSSCInstanceID++).toString(10), 10, 64);
+        this.ID = ID;
+        const isClone = typeof cloneInstanceID == 'string' && cloneInstanceID in JSSCInstances;
+        const parent = JSSCInstances[cloneInstanceID];
+        this.#events = isClone ? parent.events : {
+            onCompressed: (input, output) => {},
+            onCompressProgress: (percentage) => {},
+            onCompressionMode: (modeID, input, output) => {},
+            onDecompressed: (input, output) => {},
+        };
+        const events = this.#events;
+        function set(name, func) {
+            if (typeof func != 'function') throw new Error(prefix+'Invalid event listener.');
+            events[name] = func;
+            JSSCInstances[ID].events = events;
+        }
+        this.events = {
+            get['onCompressed'] () {return events.onCompressed},
+            get['onCompressProgress'] () {return events.onCompressProgress},
+            get['onCompressionMode'] () {return events.onCompressionMode},
+            get['onDecompressed'] () {return events.onDecompressed},
+            set['onCompressed'] (func) {set('onCompressed', func)},
+            set['onCompressProgress'] (func) {set('onCompressProgress', func)},
+            set['onCompressionMode'] (func) {set('onCompressionMode', func)},
+            set['onDecompressed'] (func) {set('onDecompressed', func)},
+        };
+        JSSCInstances[this.ID] = this;
+        [
+            this.compress, this.decompress,
+            this.compressToBase64, this.decompressFromBase64,
+            this.compressToBase64URL, this.decompressFromBase64URL,
+            this.compressToUint8Array, this.decompressFromUint8Array,
+            this.compressLarge, this.compressLargeToBase64, this.compressLargeToBase64URL, this.compressLargeToUint8Array
+        ] = JSSCFunctions(this.ID,
+            compress, decompress,
+            compressToBase64, decompressFromBase64,
+            compressToBase64URL, decompressFromBase64URL,
+            compressToUint8Array, decompressFromUint8Array,
+            compressLarge, compressLargeToBase64, compressLargeToBase64URL, compressLargeToUint8Array
+        );
+        this.clone = () => {
+            return new JSSC(this.ID);
+        };
+        this.delete = () => {
+            delete JSSCInstances[this.ID];
+            for (const [key] of Object.keys(this)) {
+                delete this[key];
+            }
+        }
+    }
 }

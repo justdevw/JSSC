@@ -422,6 +422,36 @@ const worker: {
     url: string | URL;
 };
 
+
+/**
+ * JavaScript String Compressor - JSSC Instance class
+ * @license MIT
+ * @copyright (c) 2025-2026 JustDeveloper <<https://justdeveloper.is-a.dev>>
+ * @since 2.2.0
+ */
+declare class JSSC {
+    constructor();
+    ID: string;
+    compress: typeof compress;
+    decompress: typeof decompress;
+    compressToBase64: typeof compressToBase64;
+    compressToBase64URL: typeof compressToBase64URL;
+    compressToUint8Array: typeof compressToUint8Array;
+    compressLarge: typeof compressLarge;
+    compressLargeToBase64: typeof compressLargeToBase64;
+    compressLargeToBase64URL: typeof compressLargeToBase64URL;
+    compressLargeToUint8Array: typeof compressLargeToUint8Array;
+    decompressFromBase64: typeof decompressFromBase64;
+    decompressFromBase64URL: typeof decompressFromBase64URL;
+    decompressFromUint8Array: typeof decompressFromUint8Array;
+    events: {
+        onCompressed: (input: string|object|number, output: string) => void;
+        onCompressProgress: (percentage: number) => void;
+        onCompressionMode: (modeID: number, input: string|object|number, output: string) => void;
+        onDecompressed: (input: string, output: string|object|number) => void;
+    }
+};
+
 export {
     compress,
     decompress,
@@ -437,5 +467,6 @@ export {
     decompressFromUint8Array,
     cache,
     version,
-    worker
+    worker,
+    JSSC
 };

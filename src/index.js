@@ -10,7 +10,9 @@ import {
     compressToUint8Array, decompressFromUint8Array,
     compressLarge, compressLargeToBase64, compressLargeToBase64URL, compressLargeToUint8Array,
     
-    getWorkerURL, setWorkerURL
+    getWorkerURL, setWorkerURL,
+
+    JSSC
 } from './core.js';
 import { setMaxCache, getMaxCache, validateCache } from './cache.js';
 
@@ -46,5 +48,5 @@ export {
     compressToUint8Array, decompressFromUint8Array,
     compressLarge, compressLargeToBase64, compressLargeToBase64URL, compressLargeToUint8Array,
 
-    cache, version, worker
+    cache, version, worker, JSSC
 }
