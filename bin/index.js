@@ -390,7 +390,7 @@ const instance = windows ? new JSSC() : {
         if (windows) {
             WinUIWait = winUIWait('Compressing "' + path.parse(inp).name + '"...');
             instance.events.onCompressProgress = (percentage) => {
-                WinUIWait.stdin.write((total + percentage / all) + "\n");
+                WinUIWait.stdin.write(((total + percentage / 100) / all) * 100 + "\n");
             };
         }
 
